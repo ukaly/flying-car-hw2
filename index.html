@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作业二 | 亿航 EH216-S 无人驾驶载人航空器系统安全分析 | 飞行汽车技术基础</title>
+<meta name="description" content="以亿航 EH216-S 为对象，基于 ConOps、SORA 特定运行风险评估、符合性方法与运行体系分析展开的安全分析。">
+<style>
+:root{
+  --bg:#eef5fb; --paper:#fbfdff; --ink:#0d3a63; --ink2:#1b5583; --ink3:#5b81a6;
+  --line:#9dbcd8; --line2:#cfe0ef; --stamp:#b0462a; --ok:#0e7566;
+  --mono:ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --sans:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--ink);font-family:var(--sans);line-height:1.78;font-size:14.5px;
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(rgba(13,58,99,.042) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(13,58,99,.042) 1px,transparent 1px),
+    linear-gradient(rgba(13,58,99,.075) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(13,58,99,.075) 1px,transparent 1px);
+  background-size:20px 20px,20px 20px,100px 100px,100px 100px;
+  background-attachment:fixed;
+}
+a{color:var(--ink2)}
+.layout{display:grid;grid-template-columns:74px minmax(0,1fr);max-width:1300px;margin:0 auto}
+.rail{position:sticky;top:0;height:100vh;border-right:2px solid var(--ink);background:rgba(251,253,255,.86);display:flex;flex-direction:column;align-items:center;padding:18px 0;z-index:20}
+.rail .rl-t{font:700 9px var(--mono);letter-spacing:.16em;color:var(--ink3);writing-mode:vertical-rl;margin-bottom:14px}
+.rail a{display:block;width:38px;height:34px;line-height:34px;text-align:center;font:700 11px/34px var(--mono);color:var(--ink3);border:1px solid transparent;text-decoration:none;margin:3px 0}
+.rail a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rail .rl-b{margin-top:auto;font:9px var(--mono);color:var(--ink3);writing-mode:vertical-rl;letter-spacing:.14em}
+main{padding:26px 34px 90px;min-width:0}
+.titleblock{border:2px solid var(--ink);background:var(--paper);display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr 1fr;box-shadow:5px 5px 0 rgba(13,58,99,.11)}
+.tb{padding:9px 12px;border-right:1px solid var(--ink);min-height:58px}
+.tb:last-child{border-right:0}
+.tb small{display:block;font:9px var(--mono);letter-spacing:.12em;color:var(--ink3);margin-bottom:4px}
+.tb b{font-size:13px;letter-spacing:.02em}
+.tb.main{background:var(--ink);color:#fff}
+.tb.main small{color:#a9cbe8}
+.tb.main b{font-size:19px;letter-spacing:.04em}
+.sheet{position:relative;background:var(--paper);border:2px solid var(--ink);margin:22px 0 0;padding:24px 28px 28px;box-shadow:5px 5px 0 rgba(13,58,99,.10)}
+.sheet::before,.sheet::after{content:"";position:absolute;width:13px;height:13px;border:2px solid var(--ink)}
+.sheet::before{left:-2px;top:-2px;border-right:0;border-bottom:0}
+.sheet::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+.sh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:20px}
+.sh .no{font:700 11px var(--mono);letter-spacing:.14em;color:var(--ink2)}
+.sh .tg{font:10px var(--mono);letter-spacing:.1em;border:1px solid var(--ink);padding:3px 8px;color:var(--ink);white-space:nowrap}
+h1{font-size:38px;line-height:1.25;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:25px;line-height:1.35;margin:0 0 4px}
+h3{font-size:16px;margin:26px 0 8px;padding-left:11px;border-left:4px solid var(--ink)}
+h3 .idx{font:700 11px var(--mono);color:var(--stamp);margin-right:9px;letter-spacing:.1em}
+.sub{font:11px var(--mono);letter-spacing:.16em;color:var(--ink3);text-transform:uppercase;margin-bottom:18px}
+.lead{font-size:15.5px;line-height:1.9;color:#153f66;max-width:860px}
+p{margin:0 0 12px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fig{border:1px solid var(--line);background:#fff;padding:10px}
+.fig svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--mono)}
+.fig figcaption{font:10px var(--mono);letter-spacing:.08em;color:var(--ink3);border-top:1px solid var(--line2);margin-top:8px;padding-top:7px;display:flex;justify-content:space-between;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 14px}
+caption{text-align:left;font:10px var(--mono);letter-spacing:.1em;color:var(--ink3);padding-bottom:6px}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:var(--ink);color:#fff;font:600 10.5px var(--mono);letter-spacing:.08em}
+tbody tr:nth-child(even){background:rgba(13,58,99,.028)}
+td b{color:var(--ink)}
+.tag{display:inline-block;font:10px var(--mono);letter-spacing:.08em;border:1px solid var(--ink2);color:var(--ink2);padding:1px 6px;margin:0 4px 3px 0}
+.stamp{display:inline-block;border:2px solid var(--stamp);color:var(--stamp);font:700 11px var(--mono);padding:4px 9px;letter-spacing:.1em;transform:rotate(-1.5deg)}
+.note{border-left:3px solid var(--stamp);background:rgba(176,70,42,.055);padding:10px 14px;font-size:13.5px;margin:14px 0}
+.note .lab{font:700 10px var(--mono);letter-spacing:.12em;color:var(--stamp);display:block;margin-bottom:4px}
+.ok{color:var(--ok);font-weight:700}
+.kv{font-size:13.5px}
+.kv b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink3);margin-right:8px}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--ink);margin-top:22px}
+.statgrid>div{padding:11px 13px;border-right:1px solid var(--ink)}
+.statgrid>div:last-child{border-right:0}
+.statgrid .n{font:700 25px var(--mono);color:var(--ink);letter-spacing:-.02em}
+.statgrid .n small{font-size:11px;font-weight:400;letter-spacing:.06em;margin-left:3px;color:var(--ink3)}
+.statgrid .k{font:10px var(--mono);letter-spacing:.06em;color:var(--ink3);margin-top:2px}
+.seals{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.seal{border:1px solid var(--line);padding:8px 12px;font:10px var(--mono);letter-spacing:.08em;color:var(--ink3)}
+.seal b{display:block;color:var(--ink);font-size:13px;margin-top:3px;letter-spacing:.02em}
+.tabs{display:flex;gap:0;border:1px solid var(--ink);border-bottom:0;margin-top:14px;flex-wrap:wrap}
+.tabs button{font:700 11px var(--mono);letter-spacing:.1em;padding:8px 16px;border:0;border-right:1px solid var(--ink);background:#fff;color:var(--ink3);cursor:pointer}
+.tabs button:last-child{border-right:0}
+.tabs button.on{background:var(--ink);color:#fff}
+.tabpanel{display:none;border:1px solid var(--ink);padding:16px}
+.tabpanel.on{display:block}
+.timeline{position:relative;border-left:2px solid var(--ink);margin:14px 0 6px 8px;padding-left:0}
+.tl{position:relative;padding:0 0 16px 22px}
+.tl::before{content:"";position:absolute;left:-7px;top:6px;width:11px;height:11px;background:var(--paper);border:2px solid var(--ink);border-radius:50%}
+.tl .d{font:700 11px var(--mono);color:var(--stamp);letter-spacing:.08em}
+.tl .t{font-weight:700}
+.tl .x{font-size:13px;color:var(--ink2)}
+.refs{font-size:12.5px;line-height:1.85;color:var(--ink2);padding-left:20px}
+.refs li{margin-bottom:3px}
+footer{margin-top:26px;border:2px solid var(--ink);background:var(--paper);padding:20px 26px;box-shadow:5px 5px 0 rgba(13,58,99,.10)}
+footer h5{font:700 11px var(--mono);letter-spacing:.14em;color:var(--ink2);margin:0 0 10px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+.rev{width:100%;font-size:11.5px}
+.rev th,.rev td{padding:5px 8px}
+.sigline{font:12px var(--mono);line-height:2.1;letter-spacing:.04em}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}.rail{display:none}main{padding:16px 14px 60px}
+  .cols,.f2{grid-template-columns:1fr}.cols3{grid-template-columns:1fr 1fr}
+  .statgrid{grid-template-columns:1fr 1fr}.statgrid>div{border-bottom:1px solid var(--ink)}
+  .titleblock{grid-template-columns:1fr 1fr}.tb{border-bottom:1px solid var(--ink)}
+  h1{font-size:29px}h2{font-size:21px}.sheet{padding:18px 15px 22px}
+}
+</style>
+</head><body>
+<div class="layout"><nav class="rail"><div class="rl-t">DWG 02 / 图幅索引</div><a href="#s0" title="标题栏">00</a><a href="#s1" title="责任边界">01</a><a href="#s2" title="SORA 评估">02</a><a href="#s3" title="符合性验证">03</a><a href="#s4" title="系统兜底">04</a><a href="#s5" title="链路与地面站">05</a><a href="#s6" title="第三方风险">06</a><a href="#s7" title="结论">07</a><div class="rl-b">SHEET INDEX · 01–08</div></nav><main><div class="titleblock">
+  <div class="tb main"><small>DRAWING TITLE / 图名</small><b>无人驾驶载人航空器系统 EH216-S<br>运行安全分析</b></div>
+  <div class="tb"><small>DWG NO. / 图号</small><b>JLU-UAM-02</b></div>
+  <div class="tb"><small>SCALE / 比例</small><b>1:20 / 示意</b></div>
+  <div class="tb"><small>SUBJECT / 课程</small><b>飞行汽车技术基础</b></div>
+  <div class="tb"><small>REV / 修订</small><b>A · 2026.11</b></div>
+</div><section class="sheet" id="s0">
+  <div class="sh"><div><div class="no">SHEET 00 / INDEX / 标题栏</div><h2>把驾驶员拿掉之后，安全去了哪里</h2></div><div class="tg">INDEX / 标题栏</div></div>
+  
+  <div class="sub">FUNDAMENTALS OF FLYING VEHICLE TECHNOLOGY · COURSEWORK 02 · DRAWING 00</div>
+  <h1>安全不再只是产品属性，而是体系属性</h1>
+  <p class="lead">有人驾驶飞机有一道最后的、不在图纸上的冗余：驾驶员。EH216-S 把这道冗余拿掉了。于是「这架飞机安不安全」这个问题，变成了「这套运行体系能不能在没有人现场判断的情况下持续安全」。我这份分析不沿用失效概率分解的老路，改从运行概念、特定运行风险评估、符合性证据与体系兜底四条线拆。</p>
+  <div class="cols" style="margin-top:18px">
+    <div>
+      <div class="note"><span class="lab">核心论点 / THESIS</span>TC 审的是设计，AC 审的是单机，PC 审的是生产，OC 审的是组织。四证齐全只说明「每一段都被审过」，不说明「风险被消除」——它只是从机上被搬到了链路、地面站、运营人和规章里。</div>
+      <p style="margin-top:14px">因此本作业的分析对象是<b>大系统</b>：航空器 + C2 链路 + 地面指挥中心 + 运营人 + 空域 + 审定规章。任何只画飞机本身的故障分析，都会漏掉最要紧的那几层。</p>
+    </div>
+    <div>
+      <div class="seals">
+        <div class="seal">NAME<b>王中炫</b></div><div class="seal">STUDENT ID<b>15231011</b></div>
+        <div class="seal">MAJOR<b>工业设计 · 2023 级</b></div><div class="seal">PILOT ONBOARD<b>NONE</b></div>
+      </div>
+      <p style="font-size:13px;color:var(--ink2);margin-top:12px">方法说明：本作业采用 ConOps（运行概念）、SORA（特定运行风险评估）、符合性方法 MC 与运行体系分析，与按 ARP4761 逐功能分解失效概率的路径不同。两者不是替代关系，而是看同一台机器的两个方向。</p>
+      <div class="stamp" style="margin-top:12px">体系即冗余</div>
+    </div>
+  </div>
+  <div class="statgrid">
+    <div><div class="n">0<small>名</small></div><div class="k">机上驾驶员</div></div>
+    <div><div class="n">4<small>证</small></div><div class="k">TC / AC / PC / OC</div></div>
+    <div><div class="n">40 000<small>+ 架次</small></div><div class="k">审定阶段飞行（官方披露）</div></div>
+    <div><div class="n">25<small>min</small></div><div class="k">续航决定的处置时间预算</div></div>
+  </div>
+
+</section><section class="sheet" id="s1">
+  <div class="sh"><div><div class="no">SHEET 01 / CONOPS / 运行概念</div><h2>先划责任边界：谁在回路里</h2></div><div class="tg">CONOPS / 运行概念</div></div>
+  
+  <div class="fig"><svg viewBox="0 0 880 280" role="img" aria-label="运行体系安全架构：飞行器、链路、地面站、运营人、局方"><rect x="30" y="30" width="820" height="52" fill="#fff" stroke="#0d3a63" stroke-width="1.6"/><text x="42" y="50" font-family="ui-monospace,monospace" font-size="9" fill="#5b81a6" letter-spacing="1">AIRCRAFT / 飞行器</text><text x="42" y="70" font-size="12" fill="#0d3a63">8 轴 16 旋翼 · 全备份飞控表决 · 电池 · fail-safe 自主决策</text><rect x="30" y="100" width="820" height="52" fill="#fff" stroke="#0d3a63" stroke-width="1.6"/><text x="42" y="120" font-family="ui-monospace,monospace" font-size="9" fill="#5b81a6" letter-spacing="1">C2 LINK / 通信链路</text><text x="42" y="140" font-size="12" fill="#0d3a63">加密通信 · 独立密钥 · GNSS / 惯导 · 失联自主处置</text><rect x="30" y="170" width="390" height="52" fill="#fff" stroke="#0d3a63" stroke-width="1.6"/><text x="42" y="190" font-family="ui-monospace,monospace" font-size="9" fill="#5b81a6" letter-spacing="1">GROUND STATION</text><text x="42" y="210" font-size="12" fill="#0d3a63">机队监控 · 调度 · 告警 · 应急干预</text><rect x="440" y="170" width="410" height="52" fill="#fff" stroke="#0d3a63" stroke-width="1.6"/><text x="452" y="190" font-family="ui-monospace,monospace" font-size="9" fill="#5b81a6" letter-spacing="1">OPERATOR / 运营人</text><text x="452" y="210" font-size="12" fill="#0d3a63">OC 资质 · 组织制度 · 人员训练 · 维护体系</text><line x1="440" y1="82" x2="440" y2="100" stroke="#b0462a" stroke-width="1.6"/><line x1="225" y1="152" x2="225" y2="170" stroke="#b0462a" stroke-width="1.6"/><line x1="645" y1="152" x2="645" y2="170" stroke="#b0462a" stroke-width="1.6"/><rect x="30" y="238" width="820" height="30" fill="none" stroke="#b0462a" stroke-width="1.2" stroke-dasharray="5 4"/><text x="440" y="258" font-family="ui-monospace,monospace" font-size="10" fill="#b0462a" text-anchor="middle">CAAC / 专用条件 · 空域 · 运行规章 —— 安全边界由体系定义，而非单件产品定义</text></svg><figcaption><span>图 01-1 · 运行体系安全架构</span><span>四层 + 规章边界</span></figcaption></div>
+  <div class="cols" style="margin-top:18px">
+    <div>
+      <h3><span class="idx">01.1</span>「远程接管」不是「远程驾驶」</h3>
+      <p>公开资料写的是：指挥控制中心集成监控、调度、预警，与航空器实时数据交换，并在应急时干预。这里的关键词是<b>监控与干预</b>，不是实时杆操纵。地面操作员不具备飞行员那种连续的、手眼闭环的操纵能力。</p>
+      <p>这个措辞差别决定了整套安全论证：不能再假设「人会在最后一刻把飞机拉回来」。所有关键决策必须在机上自主完成，地面侧只提供监控、调度与有限干预。</p>
+    </div>
+    <div>
+      <table>
+        <caption>表 01-1 · 安全责任矩阵（作者整理）</caption>
+        <thead><tr><th>功能</th><th>机上</th><th>地面 / 运营人</th><th>局方</th></tr></thead>
+        <tbody>
+          <tr><td><b>稳定与导航</b></td><td>飞控自主</td><td>监控</td><td>审定</td></tr>
+          <tr><td><b>航线与放行</b></td><td>执行预置</td><td>申请 / 放行</td><td>批准空域</td></tr>
+          <tr><td><b>失效检测</b></td><td>表决 + 自检</td><td>告警复核</td><td>符合性要求</td></tr>
+          <tr><td><b>应急决策</b></td><td><b>自主迫降</b></td><td>干预 / 通报</td><td>运行规范</td></tr>
+          <tr><td><b>乘客疏散</b></td><td>图示自解释</td><td>地面人员</td><td>应急程序审查</td></tr>
+          <tr><td><b>持续安全</b></td><td>数据记录</td><td>事件上报 / 维护</td><td>监督</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="note"><span class="lab">作者判断</span>表里最值得盯的是「应急决策」那一行：决策主体在机上，但后果由地面运营人和公众承担。责任与能力不重合，正是这类系统最难写清楚的地方。</div>
+
+</section><section class="sheet" id="s2">
+  <div class="sh"><div><div class="no">SHEET 02 / SORA / 特定运行风险评估</div><h2>SORA：从运行场景反推安全措施</h2></div><div class="tg">SORA / 特定运行风险评估</div></div>
+  
+  <div class="cols">
+    <div>
+      <h3><span class="idx">02.1</span>为什么换一套方法</h3>
+      <p>按 ARP4761 那套，从功能失效状态出发、给定量概率目标，适合有人运输类飞机。但对无人驾驶载客，最迫切的问题不是「某个部件失效概率是多少」，而是<b>「这一次运行在什么环境里、对地面和空中的第三方造成什么风险」</b>。</p>
+      <p>SORA 的顺序正好反过来：先定义运行概念（ConOps），再评<b>地面风险 GRC</b> 与<b>空中风险 ARC</b>，经过缓解措施后确定 SAIL（特定运行保证与完整性等级），最后导出一组 <b>OSO（运行安全目标）</b>。</p>
+      <p>对 EH216-S 来说，「预设航线 + 限定区域 + 起降点清空」本身就是最强的风险缓解措施，重要性不低于任何硬件冗余。</p>
+      <div class="note"><span class="lab">说明</span>下面的面板是按 SORA 思路做的<b>教学化简化整理</b>，不是官方审定结论，也不代表该型号的实际运行批准范围。</div>
+    </div>
+    <div>
+      <h3><span class="idx">02.2</span>场景 → 措施（可切换）</h3>
+      <div class="tabs" id="soraTabs">
+        <button class="on" data-k="tour">景区观光</button>
+        <button data-k="police">警务 / 应急</button>
+        <button data-k="cargo">物资运输</button>
+        <button data-k="commute">城市通勤</button>
+      </div>
+      <div class="tabpanel on" id="soraBox" style="min-height:230px"></div>
+    </div>
+  </div>
+  <h3><span class="idx">02.3</span>从场景对比里读出来的结论</h3>
+  <p>把四个场景并排看，风险等级并不主要由飞机决定，而由<b>地面人口密度</b>和<b>空域混合程度</b>决定。同一台 EH216-S，在景区水域上空和在城市建成区上方，几乎是两个不同的产品。这也是为什么「城市通勤」在 25 min / 30 km 的包线和高密度空域下，现阶段不成立——不是飞机不够好，是运行条件还没被建立。</p>
+
+</section><section class="sheet" id="s3">
+  <div class="sh"><div><div class="no">SHEET 03 / MOC / 审定证据</div><h2>符合性验证：证据是怎么被造出来的</h2></div><div class="tg">MOC / 审定证据</div></div>
+  
+  <div class="cols">
+    <div>
+      <h3><span class="idx">03.1</span>没有现成规章可套</h3>
+      <p>2022 年 2 月，民航局为这个型号单独颁布《EH216-S 型无人驾驶航空器系统专用条件》。这句话的分量在于：审定时连「按什么标准审」都是新写的。安全基线不是从既有条款里查出来的，是边审边定义出来的。</p>
+      <p>因此「符合性」在这里不是填表，而是要用一套方法把「设计满足了某条要求」证明给审查方看。</p>
+    </div>
+    <div>
+      <table>
+        <caption>表 03-1 · 常用符合性方法（教学化整理，非条款原文）</caption>
+        <thead><tr><th style="width:70px">代号</th><th>方法</th><th>适用</th></tr></thead>
+        <tbody>
+          <tr><td><b>MC0</b></td><td>符合性声明 / 说明</td><td>条款本身可由设计说明直接覆盖</td></tr>
+          <tr><td><b>MC1</b></td><td>设计图纸与计算</td><td>结构强度、载荷、包线</td></tr>
+          <tr><td><b>MC2</b></td><td>分析 / 仿真</td><td>飞控逻辑、失效重构</td></tr>
+          <tr><td><b>MC3</b></td><td>安全性评估</td><td>失效影响、共因分析</td></tr>
+          <tr><td><b>MC4</b></td><td>实验室试验</td><td>静力、落震、螺旋桨</td></tr>
+          <tr><td><b>MC5</b></td><td>地面 / 机上检查</td><td>装配、制造符合性</td></tr>
+          <tr><td><b>MC6</b></td><td>飞行试验</td><td>最终型号合格审定试飞</td></tr>
+          <tr><td><b>MC7–9</b></td><td>模拟器 / 设备鉴定 / 其他</td><td>按条款选用</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <h3><span class="idx">03.2</span>数字能证明什么，不能证明什么</h3>
+  <p>官方披露：1000+ 天、500+ 摸底试验、40 000+ 飞行架次、65 大项审查实验、450+ 正式符合性验证科目。这些证据的强度在于<b>覆盖面与可追溯</b>——每一条要求都能对应到一种证明方法。</p>
+  <div class="note"><span class="lab">作者判断</span>但证据数量不等于风险穷尽。专用条件是为一个具体型号、在具体运行设想下写就的；当运行场景从景区扩展到城区、从白天扩展到夜航，原来的符合性矩阵需要重新打开。四证证明的是「按当时的约定证明过了」，不是「证明完了」。</div>
+
+</section><section class="sheet" id="s4">
+  <div class="sh"><div><div class="no">SHEET 04 / ARCH / 系统兜底</div><h2>没有驾驶员兜底：冗余必须自己闭环</h2></div><div class="tg">ARCH / 系统兜底</div></div>
+  
+  <div class="fig"><svg viewBox="0 0 880 210" role="img" aria-label="失效处置时序：检测、决策、执行的时间预算"><line x1="40" y1="120" x2="850" y2="120" stroke="#0d3a63" stroke-width="2"/><circle cx="80" cy="120" r="6" fill="#fbfdff" stroke="#0d3a63" stroke-width="1.8"/><text x="80" y="102" font-family="ui-monospace,monospace" font-size="11" fill="#b0462a" text-anchor="middle">T0</text><text x="80" y="146" font-size="12" fill="#0d3a63" text-anchor="middle">失效发生</text><line x1="88" y1="120" x2="260" y2="120" stroke="#b0462a" stroke-width="1.4"/><polygon points="264,120 256,115 256,125" fill="#b0462a"/><circle cx="270" cy="120" r="6" fill="#fbfdff" stroke="#0d3a63" stroke-width="1.8"/><text x="270" y="102" font-family="ui-monospace,monospace" font-size="11" fill="#b0462a" text-anchor="middle">T1</text><text x="270" y="146" font-size="12" fill="#0d3a63" text-anchor="middle">检测 / 表决</text><line x1="278" y1="120" x2="450" y2="120" stroke="#b0462a" stroke-width="1.4"/><polygon points="454,120 446,115 446,125" fill="#b0462a"/><circle cx="460" cy="120" r="6" fill="#fbfdff" stroke="#0d3a63" stroke-width="1.8"/><text x="460" y="102" font-family="ui-monospace,monospace" font-size="11" fill="#b0462a" text-anchor="middle">T2</text><text x="460" y="146" font-size="12" fill="#0d3a63" text-anchor="middle">自主决策</text><line x1="468" y1="120" x2="640" y2="120" stroke="#b0462a" stroke-width="1.4"/><polygon points="644,120 636,115 636,125" fill="#b0462a"/><circle cx="650" cy="120" r="6" fill="#fbfdff" stroke="#0d3a63" stroke-width="1.8"/><text x="650" y="102" font-family="ui-monospace,monospace" font-size="11" fill="#b0462a" text-anchor="middle">T3</text><text x="650" y="146" font-size="12" fill="#0d3a63" text-anchor="middle">执行</text><line x1="658" y1="120" x2="830" y2="120" stroke="#b0462a" stroke-width="1.4"/><polygon points="834,120 826,115 826,125" fill="#b0462a"/><circle cx="840" cy="120" r="6" fill="#fbfdff" stroke="#0d3a63" stroke-width="1.8"/><text x="840" y="102" font-family="ui-monospace,monospace" font-size="11" fill="#b0462a" text-anchor="middle">T4</text><text x="840" y="146" font-size="12" fill="#0d3a63" text-anchor="middle">着陆 / 迫降</text><text x="445" y="186" font-family="ui-monospace,monospace" font-size="9.5" fill="#5b81a6" text-anchor="middle">25 min 续航 / 30 km 航程 ⇒ 返航窗口极窄，迫降策略优先于返航</text></svg><figcaption><span>图 04-1 · 失效处置时序与时间预算</span><span>T0 – T4</span></figcaption></div>
+  <div class="cols" style="margin-top:18px">
+    <div>
+      <h3><span class="idx">04.1</span>机上必须自己做完四件事</h3>
+      <p>检测 → 决策 → 执行 → 着陆，全程没有现场人为判断。公开资料提到的「全备份关键部件、多套飞控表决、内置故障安全系统自主判断继续飞或安全迫降」，正是为这四步准备的。</p>
+      <table>
+        <caption>表 04-1 · 冗余层与残余问题</caption>
+        <thead><tr><th>层次</th><th>措施</th><th>残余问题</th></tr></thead>
+        <tbody>
+          <tr><td><b>部件</b></td><td>关键飞行部件全备份</td><td>备份是否物理隔离</td></tr>
+          <tr><td><b>系统</b></td><td>多套飞控 + 表决 + 传感器</td><td>同版软件 / 共电源导致共因</td></tr>
+          <tr><td><b>动力</b></td><td>8 轴 16 旋翼，单桨失效可重构</td><td>相邻多轴失效的配平边界</td></tr>
+          <tr><td><b>能源</b></td><td>智能电池管理</td><td>热失控蔓延、低温与老化</td></tr>
+          <tr><td><b>决策</b></td><td>fail-safe 自主迫降</td><td>可选迫降点是否始终可达</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3><span class="idx">04.2</span>「返航」不如「迫降」现实</h3>
+      <p>25 min 续航、30 km 设计航程意味着留给处置的时间窗口非常窄。有人机可以靠驾驶员盘旋、等待、选场；这里必须预先在航线沿线布好备降点，并把「哪里能落」写进飞行计划，而不是出事后临时找。</p>
+      <p>换句话说，<b>应急能力主要不是机上能力，是航线规划能力</b>。这又回到了体系。</p>
+      <div class="note"><span class="lab">共因提醒</span>上面每一层冗余都默认「电还在、链路还在、地面站还在」。电源与链路是跨层共因，任何一层的冗余度都会被它们同时打折；这也是我认为最该做共因分析的位置。</div>
+      <h3><span class="idx">04.3</span>和按功能分解的老方法比</h3>
+      <p>如果按功能危害分析逐项列失效状态，会得到一个很整齐的表格，但容易把「体系没接住」这类风险漏掉。我改用时序图，是想把「时间不够」这个约束摆到台面上——它不是某个部件的失效，却是很多失效最终变严重的原因。</p>
+    </div>
+  </div>
+
+</section><section class="sheet" id="s5">
+  <div class="sh"><div><div class="no">SHEET 05 / C2 / 信息与运行</div><h2>链路、地面站与网络安全</h2></div><div class="tg">C2 / 信息与运行</div></div>
+  
+  <div class="cols">
+    <div>
+      <h3><span class="idx">05.1</span>链路既是神经，又不能是依赖</h3>
+      <p>官方强调加密通信与单机独立密钥、机队集中调度。但这里有一对必须同时成立、又很难同时验证的要求：</p>
+      <p><b>①</b> 链路是地面监控、调度与应急干预的通道，属于运行体系的一部分；<br><b>②</b> 链路中断时，航空器仍须自主完成飞行或安全迫降，不能「等地面指令」。</p>
+      <p>对有人机，通信中断后飞行员照飞；对无人驾驶，通信中断必须触发一套预设的自主行为。这条边界如果没验证透，冗余设计再漂亮也没有落点。</p>
+      <table>
+        <caption>表 05-1 · 信息与运行侧威胁清单</caption>
+        <thead><tr><th>威胁</th><th>后果</th><th>控制思路</th></tr></thead>
+        <tbody>
+          <tr><td>C2 链路中断 / 降级</td><td>失去监控与干预</td><td>失联预设模式、不依赖地面的关键决策</td></tr>
+          <tr><td>GNSS 欺骗 / 干扰</td><td>位置 belief 错误</td><td>惯导 / 视觉 / 地标备份定位</td></tr>
+          <tr><td>地面站被入侵或误操作</td><td>机队级错误指令</td><td>权限分级、双人复核、指令白名单</td></tr>
+          <tr><td>机队调度冲突</td><td>多机间隔不足</td><td>集中调度 + 电子围栏 + 航线隔离</td></tr>
+          <tr><td>软件版本 / 配置不一致</td><td>同型机行为分叉</td><td>构型管理与批次追溯</td></tr>
+          <tr><td>飞行数据被篡改或缺失</td><td>事件无法复盘</td><td>机载记录 + 独立留存</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3><span class="idx">05.2</span>OC 审的是组织，不是设备</h3>
+      <p>2025 年 3 月首批 OC 发给运营航司，审核覆盖运营主体、组织架构、运营制度、运行环境与安全性能。这句话值得读两遍：拿到 OC 的是<b>公司</b>，不是飞机。</p>
+      <p>因此人员资质、值班制度、维护间隔、事件上报、演练频率，都是安全系统的一部分；设备再冗余，组织失灵一样会出事。</p>
+      <div class="note"><span class="lab">作者判断</span>这类产品最容易被低估的风险是「流程性共因」：同一个地面站、同一套排班、同一版运行手册，会同时影响它监控的所有飞机。硬件冗余解决不了这个。</div>
+      <h3><span class="idx">05.3</span>乘客看不见的那一层</h3>
+      <p>乘客接触到的是舱门和座椅，接触到安全体系的地方其实只有登机前的安全简报。信息设计的缺口就在这里：把一套复杂的运行体系，压缩成两分钟内能理解、且不引起误解的说明。</p>
+    </div>
+  </div>
+
+</section><section class="sheet" id="s6">
+  <div class="sh"><div><div class="no">SHEET 06 / 3RD PARTY / 外部风险</div><h2>第三方风险与公众接受度</h2></div><div class="tg">3RD PARTY / 外部风险</div></div>
+  
+  <div class="cols">
+    <div class="fig"><svg viewBox="0 0 520 330" role="img" aria-label="起降点安全半径俯视示意"><g stroke="#cfe0ef" stroke-width=".8"><line x1="20" y1="0" x2="20" y2="330"/><line x1="60" y1="0" x2="60" y2="330"/><line x1="100" y1="0" x2="100" y2="330"/><line x1="140" y1="0" x2="140" y2="330"/><line x1="180" y1="0" x2="180" y2="330"/><line x1="220" y1="0" x2="220" y2="330"/><line x1="260" y1="0" x2="260" y2="330"/><line x1="300" y1="0" x2="300" y2="330"/><line x1="340" y1="0" x2="340" y2="330"/><line x1="380" y1="0" x2="380" y2="330"/><line x1="420" y1="0" x2="420" y2="330"/><line x1="460" y1="0" x2="460" y2="330"/><line x1="500" y1="0" x2="500" y2="330"/><line x1="0" y1="20" x2="520" y2="20"/><line x1="0" y1="60" x2="520" y2="60"/><line x1="0" y1="100" x2="520" y2="100"/><line x1="0" y1="140" x2="520" y2="140"/><line x1="0" y1="180" x2="520" y2="180"/><line x1="0" y1="220" x2="520" y2="220"/><line x1="0" y1="260" x2="520" y2="260"/><line x1="0" y1="300" x2="520" y2="300"/></g><circle cx="260" cy="165" r="130" fill="none" stroke="#b0462a" stroke-width="1.6" stroke-dasharray="6 4"/><circle cx="260" cy="165" r="95" fill="none" stroke="#1b5583" stroke-width="1.6" stroke-dasharray="4 4"/><circle cx="260" cy="165" r="52" fill="none" stroke="#0d3a63" stroke-width="1.6"/><circle cx="260" cy="165" r="26" fill="#e8f2fb" stroke="#0d3a63" stroke-width="2"/><text x="260" y="169" font-family="ui-monospace,monospace" font-size="10" fill="#0d3a63" text-anchor="middle">A/C</text><g fill="#b0462a" font-family="ui-monospace,monospace" font-size="9"><circle cx="260" cy="25" r="3"/><text x="260" y="18" text-anchor="middle">R = 130 清空区</text><text x="400" y="290">① 围观者 / 儿童</text><text x="400" y="305">② 车辆与硬质地面</text></g><text x="20" y="318" font-family="ui-monospace,monospace" font-size="9" fill="#5b81a6">VERTIport PLAN / 安全半径按最大风速漂移量确定 · 示意</text></svg><figcaption><span>图 06-1 · 起降点安全半径俯视示意</span><span>非比例图</span></figcaption></div>
+    <div>
+      <h3><span class="idx">06.1</span>风险主要发生在地面</h3>
+      <p>景区和营地多为开放场地，围观者、儿童、车辆可能进入下洗流与桨盘范围。16 个桨盘带来的声源与下洗是分散的，安全半径要按最大风速漂移量而不是按机身尺寸定。</p>
+      <table>
+        <caption>表 06-1 · 第三方风险与控制</caption>
+        <thead><tr><th>风险源</th><th>控制</th></tr></thead>
+        <tbody>
+          <tr><td>围观者 / 儿童误入</td><td>物理围栏 + 清空检测 + 声光预警 + 双人放行</td></tr>
+          <tr><td>车辆与硬质地面</td><td>起降区铺装与隔离、迫降点预先勘选</td></tr>
+          <tr><td>侧风 / 能见度突变</td><td>气象门限硬性放行条件，不作「建议」</td></tr>
+          <tr><td>噪声与振动投诉</td><td>运行时段限制、社区沟通、实测数据公开</td></tr>
+          <tr><td>落地后起火 / 侧翻</td><td>纯机械应急手柄、舱内外双操作点</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <h3><span class="idx">06.2</span>无人驾驶会放大舆论后果</h3>
+  <p>同等程度的事故，发生在「没有驾驶员的载人飞行器」上，公众对品类的信任损失会明显更大。原因不是技术，是心理契约：乘客交出的不是对一名司机的信任，而是对一套看不见的体系的信任。一次事故会被读成「体系不可信」，而不只是「这一架出了故障」。</p>
+  <div class="note"><span class="lab">作者判断</span>所以公众沟通不是运营之外的软工作，而是安全体系的一环：把运行边界（哪里能飞、什么天气不飞、失联会怎样）讲清楚，比宣传「零事故」更能建立可持续的接受度。</div>
+
+</section><section class="sheet" id="s7">
+  <div class="sh"><div><div class="no">SHEET 07 / CONCLUSION / 建议</div><h2>结论：把风险放回体系里</h2></div><div class="tg">CONCLUSION / 建议</div></div>
+  
+  <p class="lead">做完这一遍，我对「四证齐全」的理解变了。它不是终点，而是一张清单：设计、单机、生产、组织，各自被审过一遍。真正决定安全的，是这四段之间的接缝有没有人负责。</p>
+  <div class="cols">
+    <div>
+      <h3><span class="idx">07.1</span>分层的改进建议</h3>
+      <table>
+        <caption>表 07-1 · 八条建议</caption>
+        <thead><tr><th style="width:80px">层面</th><th>建议</th></tr></thead>
+        <tbody>
+          <tr><td><b>设计端</b></td><td>把「链路中断」当作顶层工况而不是异常分支，验证全部关键决策可在无地面指令下完成</td></tr>
+          <tr><td><b>设计端</b></td><td>电源、链路、地面站做跨层共因分析，明确冗余度被打折后的残余能力</td></tr>
+          <tr><td><b>运行端</b></td><td>每条航线预先勘选备降点，并把可达性写进飞行计划与放行条件</td></tr>
+          <tr><td><b>运行端</b></td><td>地面站告警分级与接管权限做独立人因验证，避免一人多机时的告警淹没</td></tr>
+          <tr><td><b>组织端</b></td><td>把值班、排班、维护、事件上报纳入同一个安全绩效闭环，防止流程性共因</td></tr>
+          <tr><td><b>组织端</b></td><td>运行场景扩展（城区、夜航、复杂气象）时重新打开符合性矩阵，不沿用原结论</td></tr>
+          <tr><td><b>规章端</b></td><td>把「地面指挥中心」与「C2 链路」作为独立审定对象写进要求，而非视为附属设备</td></tr>
+          <tr><td><b>公众端</b></td><td>公开运行边界与实测噪声 / 事件数据，用可核对的信息替代零事故话术</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3><span class="idx">07.2</span>回到我自己的专业</h3>
+      <p>这份分析对我最有用的地方，是让我看清「界面」的范围被放大了。以前做座舱，界面是仪表和门把手；现在做无人驾驶载客，界面还包括登机前的两分钟说明、地面监控屏的告警优先级、起降点的围栏和地面指示。</p>
+      <p>这些东西不在飞机上，却直接决定乘客和第三方是否安全。<b>工程负责让失效不发生，设计负责让体系的边界被人看懂</b>——看不懂的边界，等于没有边界。</p>
+      <div class="note"><span class="lab">与作业一的关系</span>作业一得出的结论是「工业设计的主战场从座舱移到了体系」；这份安全分析从另一侧印证了同一件事：风险也从机体移到了体系。两条线在这一点上合拢。</div>
+      <div class="stamp" style="margin-top:14px">体系即冗余</div>
+    </div>
+  </div>
+
+</section><h3><span class="idx">REF</span>主要参考来源</h3><ol class="refs"><li>亿航智能官网：EH216-S 产品页（尺寸、最大起飞重量、航程、速度、动力构型与全备份说明）</li><li>亿航智能官网：《适航审定历程》（2020-12 申请 → 2025-03 OC，审定工作量数据）</li><li>中国民用航空局 / 中国民航报：《从 0 到 1，中国方案让「空中的士」飞向未来》，EH216-S 专用条件与 TC 审定</li><li>《EH216-S 型无人驾驶航空器系统专用条件》，中国民航局，2022-02</li><li>广东省人民政府门户网站：《全国首台警用载人无人机在广州入列》，2026-01</li><li>中华工商网：《亿航智能：让低空经济走近千家万户》，OC 与商业化运营，2025-06</li><li>公开报道：西藏林芝高海拔文旅飞行、武汉东湖低空观光、巴西试验飞行许可、墨西哥特殊适航证</li><li>JARUS SORA 2.0 / 2.5，Specific Operations Risk Assessment（特定运行风险评估方法）</li><li>《民用无人驾驶航空器运行安全管理规定》及 CCAR-21-R4 相关符合性方法（MC0–MC9）</li><li>N. Leveson, Engineering a Safer World（系统安全理论，用于「责任边界」讨论）</li></ol><footer>
+  <div class="f2">
+    <div><h5>REVISION RECORD / 修订记录</h5>
+      <table class="rev"><thead><tr><th>REV</th><th>DATE</th><th>DESCRIPTION</th><th>DRAWN</th></tr></thead>
+      <tbody><tr><td>A</td><td>2026-11-24</td><td>首次提交 · 作业二：EH216-S 全方位安全分析</td><td>王中炫</td></tr></tbody></table>
+      <h5 style="margin-top:16px">SUBMISSION / 提交信息</h5>
+      <div class="sigline">姓名：王中炫<br>学号：15231011<br>专业：工业设计 · 2023 级<br>课程：飞行汽车技术基础 · 2026 秋<br>提交形式：Web 页面（GitHub Pages）</div>
+    </div>
+    <div><h5>NOTES / 图幅备注</h5>
+      <div class="sigline">图号：JLU-UAM-02<br>单位：mm / kg / km / min<br>投影：第一角法（示意）<br>公差：未注尺寸仅供参考<br>本图纸为非工程图，按公开资料示意绘制</div>
+      <div class="seals" style="margin-top:14px">
+        <div class="seal">DRAWN BY<b>王中炫</b></div><div class="seal">STUDENT ID<b>15231011</b></div>
+        <div class="seal">CHECKED<b>SELF</b></div>
+      </div>
+      <div class="stamp" style="margin-top:16px">仅供课程作业使用</div>
+    </div>
+  </div>
+</footer></main></div>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=[].slice.call(document.querySelectorAll('.sheet[id]'));
+  function spy(){
+    var y=window.scrollY+160,cur=null;
+    secs.forEach(function(s){if(s.offsetTop<=y)cur=s;});
+    links.forEach(function(a){a.classList.toggle('on',!!cur&&a.getAttribute('href')==='#'+cur.id);});
+  }
+  window.addEventListener('scroll',spy,{passive:true});spy();
+})();
+
+
+(function(){
+  var S={
+    tour:{n:'景区低空观光',g:'GRC 中低（限定水域/山体上空，地面人口稀疏）',a:'ARC 低（预先划设隔离空域）',
+      o:['起降点与航线预先批准、地面区域清空程序','乘客登机前安全简报与人数清点','链路冗余与失联自主返航/迫降预案','气象门限（侧风、能见度、降水）与放行权','运营人值守的地面指挥中心与双人复核','每架次飞行数据记录与事件上报']},
+    police:{n:'城市警务 / 应急巡查',g:'GRC 偏高（城区人口与建筑密集）',a:'ARC 中（可能与有人机、其他无人机共用空域）',
+      o:['航线避开人口密集区，预设备降点网络','与空管 / 公安指挥系统的数据接口与协同','更高等级的链路鲁棒性与抗欺骗定位','任务变更的重新授权流程（不能临时改航线）','机组资质、夜航与复杂气象专项训练','第三方风险告知与地面管制联动']},
+    cargo:{n:'应急物资 / 岛际运输',g:'GRC 低（多为非载人、地面暴露少）',a:'ARC 中低（固定走廊、可隔离）',
+      o:['载荷固定与重心包线校验','固定走廊运行与电子围栏','电池与载荷的防火隔离','失联后的自主处置与回收程序','跨区域运行的规章差异核对','维护间隔与批次追溯']},
+    commute:{n:'城市通勤 / 点对点出行',g:'GRC 高（建成区、无隔离场地）',a:'ARC 高（高密度混合空域）',
+      o:['现阶段不成立：25 min / 30 km 的航程包线不足以支撑通勤','需先解决高密度空域的间隔与避让规则','需明确无人驾驶载客在人口密集区上方的运行许可','需为大规模运行建立 UTM 与远程识别体系','公众接受度与噪声指标尚无成熟基线','应急迫降点网络在城市中几乎无解']}
+  };
+  var box=document.getElementById('soraBox');
+  document.getElementById('soraTabs').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    [].forEach.call(this.querySelectorAll('button'),function(x){x.classList.remove('on');});
+    b.classList.add('on');
+    var d=S[b.getAttribute('data-k')];
+    var lis=d.o.map(function(x,i){return '<li>'+x+'</li>';}).join('');
+    box.innerHTML='<h3><span class="idx">OSO</span>'+d.n+' · 运行安全目标（教学化整理）</h3>'+
+      '<div class="kv"><b>地面风险</b>　'+d.g+'<br><b>空中风险</b>　'+d.a+'</div>'+
+      '<ol class="refs" style="margin-top:10px">'+lis+'</ol>'+
+      '<div class="note"><span class="lab">说明</span>以上按 SORA「由运行场景反推安全措施」的思路整理，为教学化简化表达，不是官方审定结论，也不代表该型号的实际运行批准范围。</div>';
+  });
+  document.querySelector('#soraTabs button').click();
+})();
+</script>
+</body></html>
